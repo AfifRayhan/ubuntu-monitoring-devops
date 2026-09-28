@@ -1,0 +1,49 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  build-test-artifact:
+
+    runs-on: [self-hosted, linux, x64]
+
+    steps:
+
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Display runner information
+        run: |
+          echo "Running on self-hosted runner"
+          hostname
+          uname -a
+          python3 --version
+
+      - name: Build
+        working-directory: ci-demo
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Test
+        working-directory: ci-demo
+        run: |
+          python3 -m unittest discover -s tests -v
+
+      - name: Verify build output
+        working-directory: ci-demo
+        run: |
+          test -f monitoring-ci-build.tar.gz
+          ls -lh monitoring-ci-build.tar.gz
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-ci-build
+          path: ci-demo/monitoring-ci-build.tar.gz
+          if-no-files-found: error
